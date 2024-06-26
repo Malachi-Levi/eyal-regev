@@ -4,6 +4,7 @@ import os
 import logging
 from datetime import datetime
 from pymongo import MongoClient
+import time
 
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
@@ -87,6 +88,23 @@ def delete_data():
         logging.error(f"Error deleting data from MongoDB: {e}")
         return jsonify({"error": "Failed to delete data"}), 500
 
+@app.route('/delay', methods=['POST'])
+def delay():
+    print("This is a message printed to the console")
+    
+    count = 1
+    while count <= 120:
+        print(count)
+        count += 1
+        print("This will print first")
+        time.sleep(60)  # Delay for 1 minute
+        print("This will print after a 1 second delay")
+
+    return jsonify({"error": "Failed to delete data"}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
+
+
+
