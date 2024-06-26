@@ -1,11 +1,9 @@
-from flask import Flask, jsonify, request, send_file 
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import os
-import random
 import logging
 from datetime import datetime
 from pymongo import MongoClient
-
 
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
@@ -21,9 +19,8 @@ client = MongoClient(MONGO_URI)
 db = client['EyalRegev']
 collection = db['EyalWeight']
 
-# Get the directory where this script is located
-script_dir = os.path.dirname(os.path.abspath(__file__))
-
+# Password for protected routes
+PASSWORD = '1'
 
 @app.route('/retiringDate', methods=['GET'])
 def get_retiringDate():
@@ -49,15 +46,16 @@ def get_getData():
         logging.error(f"Error fetching data from MongoDB: {e}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
-
 @app.route('/writeData', methods=['POST'])
 def write_data():
     print("This is a message printed to the console")
     try:
         # Get JSON data from the request
         data = request.json
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
+        password = data.pop('password', None)
+        
+        if not password or password != PASSWORD:
+            return jsonify({"error": "Invalid password"}), 403
         
         # Insert data into MongoDB collection
         collection.insert_one(data)
@@ -65,18 +63,23 @@ def write_data():
     except Exception as e:
         logging.error(f"Error writing data to MongoDB: {e}")
         return jsonify({"error": "Failed to insert data"}), 500
+    
 
 @app.route('/deleteData', methods=['DELETE'])
 def delete_data():
     print("This is a message printed to the console")
     try:
         # Get JSON data from the request
-        criteria = request.json
-        if not criteria:
-            return jsonify({"error": "No criteria provided"}), 400
+        data = request.json
+        print(f"Received data: {data}")
+        password = data.pop('password', None)
+        print(f"Received password: {password}")
+        
+        if not password or password != PASSWORD:
+            return jsonify({"error": "Invalid password"}), 403
         
         # Delete data from MongoDB collection
-        result = collection.delete_one(criteria)
+        result = collection.delete_one(data)
         if result.deleted_count == 0:
             return jsonify({"error": "No document matched the provided criteria"}), 404
         return jsonify({"message": "Data deleted successfully"}), 200
